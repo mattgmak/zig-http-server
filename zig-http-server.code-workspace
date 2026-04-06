@@ -1,19 +1,25 @@
 {
   "folders": [
     {
-      "path": "."
-    }
+      "path": ".",
+    },
   ],
   "settings": {
     "zig.zls.enabled": "on",
     "zig.zlint.enabled": true,
     "zig.path": "zig",
+    "[zig]": {
+      "editor.inlayHints.enabled": "off",
+    },
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always",
+    },
     "editor.semanticTokenColorCustomizations": {
       "rules": {
         "*.deprecated": {
-          "strikethrough": true
-        }
-      }
-    }
-  }
+          "strikethrough": true,
+        },
+      },
+    },
+  },
 }
