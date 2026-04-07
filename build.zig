@@ -7,36 +7,13 @@ const std = @import("std");
 // build runner to parallelize the build automatically (and the cache system to
 // know when a step doesn't need to be re-run).
 pub fn build(b: *std.Build) void {
-    // Standard target options allow the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
-    // It's also possible to define more custom flags to toggle optional features
-    // of this build script using `b.option()`. All defined flags (including
-    // target and optimize options) will be listed when running `zig build --help`
-    // in this directory.
 
-    // Here we define an executable. An executable needs to have a root module
-    // which needs to expose a `main` function. While we could add a main function
-    // to the module defined above, it's sometimes preferable to split business
-    // logic and the CLI into two separate modules.
-    //
-    // If your goal is to create a Zig library for others to use, consider if
-    // it might benefit from also exposing a CLI tool. A parser library for a
-    // data serialization format could also bundle a CLI syntax checker, for example.
-    //
-    // If instead your goal is to create an executable, consider if users might
-    // be interested in also being able to embed the core functionality of your
-    // program in their own executable in order to avoid the overhead involved in
-    // subprocessing your CLI tool.
-    //
-    // If neither case applies to you, feel free to delete the declaration you
-    // don't need and to put everything under a single module.
+    const request_mod = b.addModule("request", .{
+        .root_source_file = b.path("internal/request/request.zig"),
+    });
+
     const tcplistener_exe = b.addExecutable(.{
         .name = "tcplistener",
         .root_module = b.createModule(.{
@@ -44,7 +21,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .imports = &.{
-                // .{ .name = "zig_http_server", .module = mod },
+                .{ .name = "request", .module = request_mod },
             },
         }),
     });
@@ -84,12 +61,21 @@ pub fn build(b: *std.Build) void {
 
     // A run step that will run the second test executable.
     const run_tcplistener_exe_tests = b.addRunArtifact(tcplistener_exe_tests);
+    const request_mod_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("internal/request/request.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const run_request_mod_tests = b.addRunArtifact(request_mod_tests);
 
     // A top level step for running all tests. dependOn can be called multiple
     // times and since the two run steps do not depend on one another, this will
     // make the two of them run in parallel.
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tcplistener_exe_tests.step);
+    test_step.dependOn(&run_request_mod_tests.step);
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //
