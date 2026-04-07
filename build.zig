@@ -40,57 +40,37 @@ pub fn build(b: *std.Build) void {
     const tcplistener_exe = b.addExecutable(.{
         .name = "tcplistener",
         .root_module = b.createModule(.{
-            // b.createModule defines a new module just like b.addModule but,
-            // unlike b.addModule, it does not expose the module to consumers of
-            // this package, which is why in this case we don't have to give it a name.
             .root_source_file = b.path("src/cmd/tcplistener/main.zig"),
-            // Target and optimization levels must be explicitly wired in when
-            // defining an executable or library (in the root module), and you
-            // can also hardcode a specific target for an executable or library
-            // definition if desireable (e.g. firmware for embedded devices).
             .target = target,
             .optimize = optimize,
-            // List of modules available for import in source files part of the
-            // root module.
             .imports = &.{
-                // Here "zig_http_server" is the name you will use in your source code to
-                // import this module (e.g. `@import("zig_http_server")`). The name is
-                // repeated because you are allowed to rename your imports, which
-                // can be extremely useful in case of collisions (which can happen
-                // importing modules from different packages).
                 // .{ .name = "zig_http_server", .module = mod },
             },
         }),
     });
-
-    // This declares intent for the executable to be installed into the
-    // install prefix when running `zig build` (i.e. when executing the default
-    // step). By default the install prefix is `zig-out/` but can be overridden
-    // by passing `--prefix` or `-p`.
     b.installArtifact(tcplistener_exe);
-
-    // This creates a top level step. Top level steps have a name and can be
-    // invoked by name when running `zig build` (e.g. `zig build run`).
-    // This will evaluate the `run` step rather than the default step.
-    // For a top level step to actually do something, it must depend on other
-    // steps (e.g. a Run step, as we will see in a moment).
-    const run_tcplistener_step = b.step("run-tcplistener", "Run the app");
-
-    // This creates a RunArtifact step in the build graph. A RunArtifact step
-    // invokes an executable compiled by Zig. Steps will only be executed by the
-    // runner if invoked directly by the user (in the case of top level steps)
-    // or if another step depends on it, so it's up to you to define when and
-    // how this Run step will be executed. In our case we want to run it when
-    // the user runs `zig build run`, so we create a dependency link.
+    const run_tcplistener_step = b.step("run-tcplistener", "Run the tcplistener");
     const run_tcplistener = b.addRunArtifact(tcplistener_exe);
     run_tcplistener_step.dependOn(&run_tcplistener.step);
-
-    // By making the run step depend on the default step, it will be run from the
-    // installation directory rather than directly from within the cache directory.
     run_tcplistener.step.dependOn(b.getInstallStep());
 
-    // This allows the user to pass arguments to the application in the build
-    // command itself, like this: `zig build run -- arg1 arg2 etc`
+    const udpsender_exe = b.addExecutable(.{
+        .name = "udpsender",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/cmd/udpsender/main.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                // .{ .name = "zig_http_server", .module = mod },
+            },
+        }),
+    });
+    b.installArtifact(udpsender_exe);
+    const run_udpsender_step = b.step("run-udpsender", "Run the udpsender");
+    const run_udpsender = b.addRunArtifact(udpsender_exe);
+    run_udpsender_step.dependOn(&run_udpsender.step);
+    run_udpsender.step.dependOn(b.getInstallStep());
+
     if (b.args) |args| {
         run_tcplistener.addArgs(args);
     }

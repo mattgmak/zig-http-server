@@ -10,6 +10,7 @@
     "zig.path": "zig",
     "[zig]": {
       "editor.inlayHints.enabled": "off",
+      "editor.tabSize": 4,
     },
     "editor.codeActionsOnSave": {
       "source.organizeImports": "always",
