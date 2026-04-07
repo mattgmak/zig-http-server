@@ -1,3 +1,6 @@
 .direnv
 .zig-cache
 zig-out
+
+temp.txt
+*.http

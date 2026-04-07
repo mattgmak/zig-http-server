@@ -32,12 +32,21 @@ pub fn main(init: std.process.Init) !void {
 
 fn nextLine(reader: *Io.Reader, alloc: std.mem.Allocator) !?[]u8 {
     var bytes: std.Io.Writer.Allocating = .init(alloc);
-    errdefer bytes.deinit();
-    const read_result = reader.streamDelimiter(&bytes.writer, '\n');
-    if (read_result == error.EndOfStream) {
-        return null;
+    defer bytes.deinit();
+
+    while (true) {
+        const byte = reader.takeByte() catch |err| switch (err) {
+            error.EndOfStream => {
+                if (bytes.writer.end == 0) return null;
+                return try bytes.toOwnedSlice();
+            },
+            else => return err,
+        };
+
+        if (byte == '\n') {
+            return try bytes.toOwnedSlice();
+        }
+
+        try bytes.writer.writeByte(byte);
     }
-    _ = try reader.takeByte();
-    const line = try bytes.toOwnedSlice();
-    return line;
 }
