@@ -4,17 +4,21 @@
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
-    zig-overlay.url = "github:mitchellh/zig-overlay";
+    zig = {
+      url = "github:silversquirl/zig-flake/compat";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     zls = {
       url = "github:zigtools/zls";
-      inputs.zig-overlay.follows = "zig-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.zig-flake.follows = "zig";
     };
   };
 
   outputs =
     {
       nixpkgs,
-      zig-overlay,
+      zig,
       zls,
       ...
     }:
@@ -41,8 +45,8 @@
         {
           default = pkgs.mkShell {
             packages = [
-              zig-overlay.packages.${system}.master-2026-04-05
-              zls.packages.${system}.default
+              zig.packages.${system}.zig_0_16_0
+              zls.packages.${system}.zls
               pkgs.zlint
             ];
           };
