@@ -9,7 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     zls = {
-      url = "github:zigtools/zls";
+      url = "github:zigtools/zls?ref=0.16.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.zig-flake.follows = "zig";
     };
